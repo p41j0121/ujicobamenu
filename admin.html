@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Tambah Menu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #00796b;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      margin-top: 15px;
+      padding: 10px;
+      border: none;
+      background: #00796b;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: gray;
+    }
+    .status {
+      text-align: center;
+      margin-top: 10px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📋 Tambah Menu</h2>
+
+    <label>Nama Menu</label>
+    <input type="text" id="nama" placeholder="Contoh: Nasi Goreng">
+
+    <label>Harga</label>
+    <input type="number" id="harga" placeholder="Contoh: 15000">
+
+    <label>Kategori</label>
+    <select id="kategori">
+      <option value="">Pilih Kategori</option>
+      <option value="Makanan">Makanan</option>
+      <option value="Minuman">Minuman</option>
+    </select>
+
+    <label>Foto Menu</label>
+    <input type="file" id="foto" accept="image/*">
+
+    <button onclick="uploadMenu()">Upload Menu</button>
+
+    <p id="status" class="status"></p>
+  </div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbxJ4MMZIrWh0N82k9OnvWs4ixBJh-rTQEP8Y8SV_Ezh1DjP1bVYiT9ytb6pRJ-CUPE1/exec";
+
+function uploadMenu() {
+  const nama = document.getElementById('nama').value.trim();
+  const harga = document.getElementById('harga').value.trim();
+  const kategori = document.getElementById('kategori').value;
+  const file = document.getElementById('foto').files[0];
+  const status = document.getElementById('status');
+
+  if (!nama || !harga || !kategori || !file) {
+    status.textContent = "❌ Lengkapi semua data!";
+    status.style.color = "red";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result.split(",")[1];
+    status.textContent = "📤 Mengupload...";
+    status.style.color = "black";
+
+    const form = new FormData();
+    form.append("nama", nama);
+    form.append("harga", harga);
+    form.append("kategori", kategori);
+    form.append("foto", base64);
+
+    fetch(API_URL, {
+      method: "POST",
+      body: form
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        status.textContent = "✅ Menu berhasil diupload!";
+        status.style.color = "green";
+        document.getElementById('nama').value = "";
+        document.getElementById('harga').value = "";
+        document.getElementById('kategori').value = "";
+        document.getElementById('foto').value = "";
+      } else {
+        status.textContent = "❌ Gagal upload: " + data.message;
+        status.style.color = "red";
+      }
+    })
+    .catch(err => {
+      status.textContent = "❌ Gagal upload: " + err.message;
+      status.style.color = "red";
+    });
+  };
+  reader.readAsDataURL(file);
+}
+</script>
+</body>
+</html>
