@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Kelola Menu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; margin: 0; background: #fafafa; }
+    header {
+      background: linear-gradient(135deg, #ff8c42, #ff3c83);
+      padding: 20px;
+      text-align: center;
+      color: white;
+      font-size: 26px;
+      font-weight: 700;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 500px;
+      margin: 30px auto;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    button {
+      background: linear-gradient(135deg, #ff8c42, #ff3c83);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:disabled { background: #aaa; }
+    #menuListAdmin img {
+      width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .menu-card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 10px;
+    }
+    .menu-card h3 { margin: 10px 0 5px; }
+    .action-btns { display: flex; gap: 10px; margin-top: 10px; }
+    .top-actions { display: flex; justify-content: space-between; align-items: center; }
+    .small-btn {
+      background: #ccc;
+      color: #333;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="top-actions">
+    🔐 Admin Panel
+    <div>
+      <button class="small-btn" onclick="logout()">Logout</button>
+      <button class="small-btn" onclick="toggleChangePass()">Ubah Password</button>
+    </div>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<div class="container" id="loginBox">
+  <h3>Masukkan Password</h3>
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <p id="loginStatus"></p>
+</div>
+
+<!-- GANTI PASSWORD -->
+<div class="container" id="changePassBox" style="display:none;">
+  <h3>Ubah Password</h3>
+  <input type="password" id="oldPass" placeholder="Password lama">
+  <input type="password" id="newPass" placeholder="Password baru">
+  <button onclick="changePassword()">Simpan Password Baru</button>
+  <p id="changeStatus"></p>
+</div>
+
+<!-- UPLOAD / EDIT -->
+<div class="container" id="uploadBox" style="display:none;">
+  <h2 id="formTitle">Tambah Menu Baru</h2>
+  <input type="text" id="nama" placeholder="Nama menu">
+  <input type="number" id="harga" placeholder="Harga">
+  <select id="kategori">
+    <option value="">Pilih kategori</option>
+    <option value="Makanan">Makanan</option>
+    <option value="Minuman">Minuman</option>
+    <option value="Lainnya">Lainnya</option>
+  </select>
+  <input type="file" id="foto" accept="image/*">
+  <button onclick="submitMenu()">Simpan</button>
+  <p id="status"></p>
+</div>
+
+<!-- DAFTAR MENU -->
+<div class="container" id="menuBox" style="display:none;">
+  <h2>Daftar Menu</h2>
+  <div id="menuListAdmin"></div>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzLsTFdGZXlxj2ZsrQVX48LknWetHZ8F3FFaSOgva7G6BNhesIxnAOLp_1VZJOUTBZj/exec";
+let allMenu = [];
+let editId = null;
+
+async function hashPassword(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+window.onload = async function() {
+  const session = sessionStorage.getItem("sessionToken");
+  const storedHash = localStorage.getItem("admin_pass_hash") || await hashPassword("12345");
+  if (session && session === storedHash) {
+    showAdminPanel();
+    fetchMenu();
+  }
+};
+
+async function login() {
+  const pass = document.getElementById("password").value.trim();
+  const inputHash = await hashPassword(pass);
+  const storedHash = localStorage.getItem("admin_pass_hash") || await hashPassword("12345");
+
+  const loginStatus = document.getElementById("loginStatus");
+  if (inputHash === storedHash) {
+    sessionStorage.setItem("sessionToken", storedHash);
+    showAdminPanel();
+    fetchMenu();
+    loginStatus.textContent = "✅ Berhasil login.";
+    loginStatus.style.color = "green";
+  } else {
+    loginStatus.textContent = "❌ Password salah!";
+    loginStatus.style.color = "red";
+  }
+
+}
+
+function logout() {
+  sessionStorage.removeItem("sessionToken");
+  location.reload();
+}
+
+function toggleChangePass() {
+  const changeBox = document.getElementById("changePassBox");
+  const loginBox = document.getElementById("loginBox");
+  const uploadBox = document.getElementById("uploadBox");
+  const menuBox = document.getElementById("menuBox");
+  const isVisible = changeBox.style.display === "block";
+  changeBox.style.display = isVisible ? "none" : "block";
+  loginBox.style.display = isVisible ? "block" : "none";
+  uploadBox.style.display = isVisible ? "block" : "none";
+  menuBox.style.display = isVisible ? "block" : "none";
+}
+
+async function changePassword() {
+  const oldPass = document.getElementById("oldPass").value.trim();
+  const newPass = document.getElementById("newPass").value.trim();
+  const status = document.getElementById("changeStatus");
+
+  const storedHash = localStorage.getItem("admin_pass_hash") || await hashPassword("12345");
+  const inputOldHash = await hashPassword(oldPass);
+
+  if (inputOldHash !== storedHash) {
+    status.textContent = "❌ Password lama salah!";
+    return;
+  }
+  if (!newPass) {
+    status.textContent = "❌ Password baru tidak boleh kosong!";
+    return;
+  }
+
+  const newHash = await hashPassword(newPass);
+  localStorage.setItem("admin_pass_hash", newHash);
+  localStorage.removeItem("isAdmin");
+  status.textContent = "✅ Password berhasil diubah! Silakan login ulang.";
+status.style.color = "green";
+document.getElementById("loginStatus").textContent = status.textContent;
+document.getElementById("loginStatus").style.color = "green";
+document.getElementById("password").value = "";
+document.getElementById("uploadBox").style.display = "none";
+document.getElementById("menuBox").style.display = "none";
+
+  document.getElementById("oldPass").value = "";
+  document.getElementById("newPass").value = "";
+  document.getElementById("changePassBox").style.display = "none";
+  document.getElementById("loginBox").style.display = "block";
+}
+
+function fetchMenu() {
+  fetch(API_URL)
+    .then(res => res.json())
+    .then(data => {
+      allMenu = data;
+      displayAdminMenu(data);
+    })
+    .catch(err => console.error("Gagal ambil menu:", err));
+}
+
+function displayAdminMenu(menu) {
+  const container = document.getElementById("menuListAdmin");
+  container.innerHTML = "";
+  menu.forEach(item => {
+    let fileId = item.gambar?.match(/[-\w]{25,}/);
+    let imgSrc = fileId ? `https://lh3.googleusercontent.com/d/${fileId[0]}` : "";
+
+    container.innerHTML += `
+      <div class="menu-card">
+        <img src="${imgSrc}" alt="${item.nama}">
+        <h3>${item.nama}</h3>
+        <p>Harga: Rp ${parseInt(item.harga).toLocaleString('id-ID')}</p>
+        <p>Kategori: ${item.kategori}</p>
+        <div class="action-btns">
+          <button onclick="fillForm(${item.id})">✏️ Edit</button>
+          <button onclick="deleteMenu(${item.id})">🗑️ Hapus</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function fillForm(id) {
+  const item = allMenu.find(m => m.id == id);
+  if (!item) return alert("Menu tidak ditemukan.");
+  document.getElementById("formTitle").textContent = "Edit Menu";
+  document.getElementById("nama").value = item.nama;
+  document.getElementById("harga").value = item.harga;
+  document.getElementById("kategori").value = item.kategori;
+  document.getElementById("foto").value = "";
+  editId = id;
+}
+
+function submitMenu() {
+  const nama = document.getElementById('nama').value.trim();
+  const harga = document.getElementById('harga').value.trim();
+  const kategori = document.getElementById('kategori').value;
+  const fotoFile = document.getElementById('foto').files[0];
+  const status = document.getElementById('status');
+
+  if (!nama || !harga || !kategori) {
+    alert("Lengkapi semua data!");
+    return;
+  }
+
+  if (editId && !fotoFile) {
+    status.textContent = "📤 Menyimpan perubahan...";
+    fetch(API_URL, {
+      method: "POST",
+      body: new URLSearchParams({ action: "edit", id: editId, nama, harga, kategori })
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      resetForm();
+      fetchMenu();
+    });
+    return;
+  }
+
+  if (!fotoFile) {
+    alert("Pilih gambar!");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onloadend = function () {
+    const base64Foto = reader.result.split(',')[1];
+    status.textContent = "📤 Mengupload...";
+
+    const form = new URLSearchParams({ nama, harga, kategori, foto: base64Foto });
+    if (editId) {
+      form.append("action", "edit");
+      form.append("id", editId);
+    }
+
+    fetch(API_URL, {
+      method: "POST",
+      body: form
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      resetForm();
+      fetchMenu();
+    })
+    .catch(err => {
+      alert("❌ Gagal: " + err.message);
+    });
+  };
+  reader.readAsDataURL(fotoFile);
+}
+
+function resetForm() {
+  document.getElementById("formTitle").textContent = "Tambah Menu Baru";
+  document.getElementById("nama").value = "";
+  document.getElementById("harga").value = "";
+  document.getElementById("kategori").value = "";
+  document.getElementById("foto").value = "";
+  document.getElementById("status").textContent = "";
+  editId = null;
+}
+
+function deleteMenu(id) {
+  if (!confirm("Yakin ingin menghapus menu ini?")) return;
+  fetch(API_URL, {
+    method: "POST",
+    body: new URLSearchParams({ action: "delete", id })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert(data.message);
+    fetchMenu();
+  })
+  .catch(err => {
+    alert("❌ Gagal hapus: " + err.message);
+  });
+}
+function showAdminPanel() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("uploadBox").style.display = "block";
+  document.getElementById("menuBox").style.display = "block";
+  document.getElementById("changePassBox").style.display = "none";
+}
+</script>
+
+</body>
+</html>
