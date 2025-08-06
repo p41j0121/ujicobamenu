@@ -2,134 +2,332 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>📖 Buku Menu</title>
+  <title>Menu Angkringan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      background: #fafafa;
-    }
+    body { font-family: 'Poppins', sans-serif; margin: 0; background: #fafafa; }
     header {
-      background: linear-gradient(135deg, #ff7e5f, #feb47b);
-      color: white;
-      text-align: center;
+      background: linear-gradient(135deg, #ff8c42, #ff3c83);
       padding: 20px;
-      font-size: 24px;
-      font-weight: bold;
-      letter-spacing: 1px;
+      text-align: center;
+      color: white;
+      font-size: 26px;
+      font-weight: 700;
     }
     .tabs {
       display: flex;
-      justify-content: center;
       gap: 10px;
       padding: 10px;
       background: white;
       position: sticky;
       top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 5;
+      justify-content: center;
     }
-    .tab {
-      padding: 10px 20px;
-      border-radius: 50px;
+    .tab-btn {
+      padding: 8px 14px;
+      border-radius: 20px;
       border: none;
-      background: #eee;
-      font-weight: bold;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
+      background: #f1f1f1;
       transition: 0.3s;
     }
-    .tab.active {
-      background: linear-gradient(135deg, #ff7e5f, #feb47b);
-      color: white;
-    }
+    .tab-btn.active { background: linear-gradient(135deg, #ff8c42, #ff3c83); color: white; }
     .menu-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 15px;
       padding: 15px;
     }
-    .menu-card {
+    .menu-item {
       background: white;
-      border-radius: 15px;
+      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      transition: transform 0.2s;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      transition: 0.3s;
     }
-    .menu-card:hover {
-      transform: scale(1.02);
+    .menu-item img { width: 100%; height: 120px; object-fit: cover; display: block; }
+    .menu-info { padding: 10px; text-align: center; }
+    .menu-info h3 { margin: 5px 0; font-size: 15px; font-weight: 600; color: #333; }
+    .menu-info p { margin: 0; font-size: 14px; color: #ff3c83; font-weight: 700; }
+    .menu-info small { display: block; margin-top: 3px; font-size: 12px; color: #777; }
+    .menu-actions { display: flex; justify-content: center; gap: 8px; margin-top: 6px; }
+    .qty-btn-small {
+      padding: 4px 8px;
+      border: none;
+      background: #ff3c83;
+      color: white;
+      font-size: 14px;
+      border-radius: 4px;
+      cursor: pointer;
     }
-    .menu-card img {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
+    .loading {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255,255,255,0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
     }
-    .menu-info {
-      padding: 10px;
-      text-align: center;
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #ff3c83;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
     }
-    .menu-info h3 {
-      margin: 5px 0;
-      font-size: 18px;
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .cart-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #ff8c42, #ff3c83);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 55px;
+      height: 55px;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      z-index: 1000;
     }
-    .price {
-      color: #ff7e5f;
+    .cart-count {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: white;
+      color: #ff3c83;
+      font-size: 12px;
       font-weight: bold;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      position: relative;
+      background: white;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+    }
+    .close-modal {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+    }
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 8px 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+    }
+    .qty-btn {
+      padding: 3px 8px;
+      border: none;
+      background: #ff3c83;
+      color: white;
+      font-size: 14px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .checkout-btn {
+      background: linear-gradient(135deg, #ff8c42, #ff3c83);
+      color: white;
+      border: none;
+      padding: 10px;
       font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      width: 100%;
+      margin-top: 10px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-<header>📖 Buku Menu</header>
+<header>📋 Menu Angkringan</header>
 
 <div class="tabs">
-  <button class="tab active" onclick="showMenu('Makanan')">🍜 Makanan</button>
-  <button class="tab" onclick="showMenu('Minuman')">🥤 Minuman</button>
+  <button class="tab-btn active" onclick="filterMenu('Makanan', this)">Makanan</button>
+  <button class="tab-btn" onclick="filterMenu('Minuman', this)">Minuman</button>
 </div>
 
-<div id="menuList" class="menu-container"></div>
+<div class="menu-container" id="menuList"></div>
+
+<div class="loading" id="loading"><div class="spinner"></div></div>
+
+<button class="cart-btn" onclick="openCart()">
+  🛒 <span class="cart-count" id="cartCount">0</span>
+</button>
+
+<div class="modal" id="cartModal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="closeCart()">❌</span>
+    <h3>Keranjang</h3>
+    <div id="cartItems"></div>
+    <p><strong>Total: Rp <span id="cartTotal">0</span></strong></p>
+    <button class="checkout-btn" onclick="checkoutWA()">Checkout WA</button>
+  </div>
+</div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxJ4MMZIrWh0N82k9OnvWs4ixBJh-rTQEP8Y8SV_Ezh1DjP1bVYiT9ytb6pRJ-CUPE1/exec";
-let menuData = [];
-let currentCategory = "Makanan";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzLsTFdGZXlxj2ZsrQVX48LknWetHZ8F3FFaSOgva7G6BNhesIxnAOLp_1VZJOUTBZj/exec";
+let allMenu = [];
+let cart = [];
 
-function formatRupiah(angka) {
-  return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+function fetchWithTimeout(url, timeout = 7000) {
+  return Promise.race([
+    fetch(url),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout mengambil data")), timeout)
+    )
+  ]);
 }
 
-function fetchMenu() {
-  fetch(API_URL)
-    .then(res => res.json())
-    .then(data => {
-      menuData = data;
-      showMenu(currentCategory);
-    })
-    .catch(err => {
-      document.getElementById('menuList').innerHTML = "<p style='color:red;text-align:center'>Gagal memuat menu.</p>";
-    });
-}
+fetchWithTimeout(GAS_URL)
+  .then(res => res.json())
+  .then(data => {
+    allMenu = data;
+    displayMenu(allMenu.filter(m => m.kategori.toLowerCase().includes('makanan')));
+    document.getElementById("loading").style.display = "none";
+  })
+  .catch(err => {
+    console.error("❌ Gagal ambil data:", err);
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("menuList").innerHTML = "<p style='text-align:center;'>❌ Gagal memuat menu.</p>";
+  });
 
-function showMenu(category) {
-  currentCategory = category;
-  document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
-  document.querySelector(`.tab:nth-child(${category === 'Makanan' ? 1 : 2})`).classList.add('active');
-
-  const filtered = menuData.filter(item => item.kategori === category);
-  document.getElementById('menuList').innerHTML = filtered.map(item => `
-    <div class="menu-card">
-      <img src="${item.gambar}" alt="${item.nama}">
-      <div class="menu-info">
-        <h3>${item.nama}</h3>
-        <p class="price">${formatRupiah(item.harga)}</p>
+function displayMenu(menu) {
+  const menuList = document.getElementById("menuList");
+  menuList.innerHTML = "";
+  menu.forEach(item => {
+    let fileIdMatch = item.gambar.match(/[-\w]{25,}/);
+    let driveDirect = fileIdMatch ? `https://lh3.googleusercontent.com/d/${fileIdMatch[0]}` : "";
+    menuList.innerHTML += `
+      <div class="menu-item">
+        <img src="${driveDirect}" alt="${item.nama}">
+        <div class="menu-info">
+          <h3>${item.nama}</h3>
+          <p>Rp ${parseInt(item.harga).toLocaleString('id-ID')}</p>
+          <small>${item.kategori}</small>
+          <div class="menu-actions">
+            <button class="qty-btn-small" onclick="changeMenuQty('${item.nama}', ${item.harga}, -1)">-</button>
+            <button class="qty-btn-small" onclick="changeMenuQty('${item.nama}', ${item.harga}, 1)">+</button>
+          </div>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  });
 }
 
-fetchMenu();
+function changeMenuQty(nama, harga, change) {
+  let found = cart.find(item => item.nama === nama);
+  if (found) {
+    found.jumlah += change;
+    if (found.jumlah <= 0) cart = cart.filter(c => c.nama !== nama);
+  } else if (change > 0) {
+    cart.push({ nama, harga, jumlah: 1 });
+  }
+  updateCartCount();
+}
+
+function filterMenu(kategori, btn=null) {
+  if (btn) {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  }
+  displayMenu(allMenu.filter(m => m.kategori.toLowerCase().includes(kategori.toLowerCase())));
+}
+
+function updateCartCount() {
+  document.getElementById("cartCount").textContent = cart.reduce((a, b) => a + b.jumlah, 0);
+}
+
+function openCart() {
+  const modal = document.getElementById("cartModal");
+  const cartItems = document.getElementById("cartItems");
+  const cartTotal = document.getElementById("cartTotal");
+  cartItems.innerHTML = "";
+  let total = 0;
+  cart.forEach((item, index) => {
+    total += item.harga * item.jumlah;
+    cartItems.innerHTML += `
+      <div class="cart-item">
+        ${item.nama} - Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}
+        <div>
+          <button class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+          ${item.jumlah}
+          <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+        </div>
+      </div>
+    `;
+  });
+  cartTotal.textContent = total.toLocaleString('id-ID');
+  modal.style.display = "block";
+}
+
+function closeCart() {
+  document.getElementById("cartModal").style.display = "none";
+}
+
+function changeQty(index, change) {
+  cart[index].jumlah += change;
+  if (cart[index].jumlah <= 0) cart.splice(index, 1);
+  updateCartCount();
+  openCart();
+}
+
+function checkoutWA() {
+  if (cart.length === 0) {
+    alert("Keranjang kosong!");
+    return;
+  }
+  let pesan = "Halo, saya ingin memesan:\n\n";
+  cart.forEach(item => {
+    pesan += `${item.nama} x${item.jumlah} - Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}\n`;
+  });
+  let total = cart.reduce((a, b) => a + b.harga * b.jumlah, 0);
+  pesan += `\nTotal: Rp ${total.toLocaleString('id-ID')}`;
+  window.open(`https://wa.me/6281234567890?text=${encodeURIComponent(pesan)}`, '_blank');
+}
+
+window.onclick = function(event) {
+  if (event.target == document.getElementById("cartModal")) {
+    closeCart();
+  }
+}
 </script>
 
 </body>
